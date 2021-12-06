@@ -22,11 +22,43 @@ enum custom_keycodes {
     USR_CPY,
     USR_CUT,
     USR_PST,
-    USR_SLCK
+    #ifdef ENCODER_ENABLE
+    USR_SLCK,
+    USR_SINT,
+    #endif //ENCODER_ENABLE
 };
 
-bool ENCODER_SCROLL_ON = false;
 
+// RGB led number layout, function of the key
+
+//  67, led 01   0, ESC    6, F1      12, F2      18, F3   23, F4   28, F5      34, F6   39, F7   44, F8      50, F9   56, F10   61, F11    66, F12    69, Prt       Rotary(Mute)   68, led 11
+//  70, led 02   1, ~      7, 1       13, 2       19, 3    24, 4    29, 5       35, 6    40, 7    45, 8       51, 9    57, 0     62, -_     78, (=+)   85, BackSpc   72, Home       71, led 12
+//  73, led 03   2, Tab    8, Q       14, W       20. E    25, R    30, T       36, Y    41, U    46, I       52, O    58, P     63, [{     89, ]}     93, \|        75, PgUp       74, led 13
+//  76, led 04   3, Caps   9, A       15, S       21, D    26, F    31, G       37, H    42, J    47, K       53, L    59, ;:    64, '"                96, Enter     86, PgDn       77, led 14
+//  80, led 05   4, Sh_L   10, Z      16, X       22, C    27, V    32, B       38, N    43, M    48, ,<      54, .<   60, /?               90, Sh_R   94, Up        82, End        81, led 15
+//  83, led 06   5, Ct_L   11,Win_L   17, Alt_L                     33, SPACE                     49, Alt_R   55, FN             65, Ct_R   95, Left   97, Down      79, Right      84, led 16
+//  87, led 07                                                                                                                                                                      88, led 17
+//  91, led 08                                                                                                                                                                      92, led 18
+
+#define CAPS_LOCK_LED_COUNT 8
+uint8_t CAPS_LOCK_LEDS[CAPS_LOCK_LED_COUNT] = {67, 70, 73, 76, 80, 83, 87, 91};
+
+// #define STATUS_LED_COUNT 3
+// uint8_t ENCODER_STATUS_LEDS[STATUS_LED_COUNT] = {69, 72, 68};
+
+
+#ifdef ENCODER_ENABLE
+
+bool ENCODER_SCROLL_ON = false;
+bool ENCODER_INTENSITY_MODIFY_ON = false;
+uint8_t ENCODER_SCROLL_INTENSITY = 3; //Defaults value to 3.
+
+#define SCROLL_INTENSITY_COUNT 8
+uint8_t SCROLL_STATUS_LEDS[SCROLL_INTENSITY_COUNT] = {92, 88, 84, 81, 77, 74, 71, 68};
+
+static void scroll_with_intensity(uint8_t keycode);
+
+#endif //ENCODER_ENABLE
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -60,7 +92,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [1] = LAYOUT(
-        _______, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          _______,
+        _______, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
         _______, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
         _______, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, RESET,            USR_CUT,
         _______, _______, RGB_VAD, _______, _______, _______, _______, _______, _______, _______, _______, _______,          QMKBEST,          USR_PST,
@@ -73,84 +105,120 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 // clang-format on
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  switch(keycode) {
-    case QMKBEST:
-      if (record->event.pressed){
-        SEND_STRING("QMK is pretty darn cool!");
-      }
-    break;
-    
-    case USR_CPY:
-      if (record->event.pressed){
-        SEND_STRING(SS_LCTL("c"));
-      }
-    break;
+    switch(keycode) {
+        case QMKBEST:
+            if (record->event.pressed){
+                SEND_STRING("QMK is pretty darn cool!");
+            }
+        break;
+        
+        case USR_CPY:
+            if (record->event.pressed){
+                SEND_STRING(SS_LCTL("c"));
+            }
+        break;
 
-    case USR_PST:
-      if (record->event.pressed){
-        SEND_STRING(SS_LCTL("v"));
-      }
-    break;
+        case USR_PST:
+            if (record->event.pressed){
+                SEND_STRING(SS_LCTL("v"));
+            }
+        break;
 
-    case USR_CUT:
-      if (record->event.pressed){
-        SEND_STRING(SS_LCTL("x"));
-      }
-    break;
+        case USR_CUT:
+            if (record->event.pressed){
+                SEND_STRING(SS_LCTL("x"));
+            }
+        break;
 
-    case USR_SLCK:
-      if (record->event.pressed){
-        ENCODER_SCROLL_ON = !ENCODER_SCROLL_ON;
-      }
-    break;
-  }
+        #ifdef ENCODER_ENABLE
+        case USR_SLCK:
+            if (record->event.pressed){
+                ENCODER_SCROLL_ON = !ENCODER_SCROLL_ON;
+            }
+        break;
+        
+        case USR_SINT:
+            if (record->event.pressed) {
+                ENCODER_INTENSITY_MODIFY_ON = !ENCODER_INTENSITY_MODIFY_ON;
+            }
+        break;
 
-  return true;
+        #endif //ENCODER_ENABLE
+    }
+
+    return true;
 };
 
 
 #ifdef ENCODER_ENABLE
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
-  uint8_t mod_state = get_mods();
+    uint8_t mod_state = get_mods();
 
-  if (ENCODER_SCROLL_ON) {
-    if (get_mods() & MOD_MASK_CTRL) {
-      unregister_mods(MOD_MASK_CTRL);
-      if (clockwise) {
-          tap_code(KC_MS_WH_RIGHT);
-      } else {
-          tap_code(KC_MS_WH_LEFT);
-      }
-      set_mods(mod_state);
+
+    if (ENCODER_INTENSITY_MODIFY_ON) {
+        if (clockwise) {
+            if (ENCODER_SCROLL_INTENSITY <= 2) {
+                ENCODER_SCROLL_INTENSITY = 1;
+            }
+            else {
+                ENCODER_SCROLL_INTENSITY = ENCODER_SCROLL_INTENSITY - 1;
+            }
+        }
+        else {
+            if (ENCODER_SCROLL_INTENSITY >= (SCROLL_INTENSITY_COUNT - 1)) {
+                ENCODER_SCROLL_INTENSITY = SCROLL_INTENSITY_COUNT;
+            }
+            else {
+                ENCODER_SCROLL_INTENSITY = ENCODER_SCROLL_INTENSITY + 1;
+            }
+        }
     }
-    else if (clockwise) {
-      tap_code(KC_MS_WH_DOWN);
+    // If we are doing encoder scrolling, then we'll do all the mouse wheel codes.
+    else if (ENCODER_SCROLL_ON) {
+        if (get_mods() & MOD_MASK_CTRL) {
+            unregister_mods(MOD_MASK_CTRL);
+            if (clockwise) {
+                scroll_with_intensity(KC_MS_WH_RIGHT);
+            } else {
+                scroll_with_intensity(KC_MS_WH_LEFT);
+            }
+            set_mods(mod_state);
+        }
+        else if (clockwise) {
+            scroll_with_intensity(KC_MS_WH_DOWN);
+        }
+        else {
+            scroll_with_intensity(KC_MS_WH_UP);
+        }
     }
+    // If we are not encoder scrolling, then use the arrow key codes.
     else {
-      tap_code(KC_MS_WH_UP);
+        if (get_mods() & MOD_MASK_CTRL) {
+            unregister_mods(MOD_MASK_CTRL);
+            if (clockwise) {
+                tap_code(KC_DOWN);
+            } else {
+                tap_code(KC_UP);
+            }
+            set_mods(mod_state);
+        }
+        else if (clockwise) {
+            tap_code(KC_RGHT);
+        }
+        else {
+            tap_code(KC_LEFT);
+        }
     }
-  }
-  else {
-    if (get_mods() & MOD_MASK_CTRL) {
-      unregister_mods(MOD_MASK_CTRL);
-      if (clockwise) {
-          tap_code(KC_DOWN);
-      } else {
-          tap_code(KC_UP);
-      }
-      set_mods(mod_state);
-    }
-    else if (clockwise) {
-      tap_code(KC_RGHT);
-    }
-    else {
-      tap_code(KC_LEFT);
-    }
-  }
-  
-  return true;
+
+    return true;
 }
+
+static void scroll_with_intensity(uint8_t keycode) {
+    for (int i = 0; i < ENCODER_SCROLL_INTENSITY; i++) {
+        tap_code(keycode);
+    }
+};
 
 #endif // ENCODER_ENABLE
 
@@ -159,49 +227,55 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
 static void set_rgb_caps_leds_on(void);
 static void set_rgb_caps_leds_off(void);
-static void set_rgb_led_red(uint8_t keycode);
+
+static void set_rgb_led_on(uint8_t keycode);
 static void set_rgb_led_none(uint8_t keycode);
 
 
 void rgb_matrix_indicators_user(void) {
     if (host_keyboard_led_state().caps_lock) {
         set_rgb_caps_leds_on();
-    } else {
-      if (rgb_matrix_get_flags() == LED_FLAG_NONE){
+    }
+    else {
         set_rgb_caps_leds_off();
-      }
+    }
+
+    if (ENCODER_INTENSITY_MODIFY_ON) {
+        for (int i = 0; i < ENCODER_SCROLL_INTENSITY && i < SCROLL_INTENSITY_COUNT; i++) {
+            set_rgb_led_on(SCROLL_STATUS_LEDS[i]);
+        }
+    }
+    else if (ENCODER_SCROLL_ON) {
+        for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
+            set_rgb_led_on(SCROLL_STATUS_LEDS[i]);
+        }
+    }
+    else {
+        for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
+            set_rgb_led_none(SCROLL_STATUS_LEDS[i]);
+        }
     }
 }
 
 
-// RGB led number layout, function of the key
-
-//  67, led 01   0, ESC    6, F1      12, F2      18, F3   23, F4   28, F5      34, F6   39, F7   44, F8      50, F9   56, F10   61, F11    66, F12    69, Prt       Rotary(Mute)   68, led 12
-//  70, led 02   1, ~      7, 1       13, 2       19, 3    24, 4    29, 5       35, 6    40, 7    45, 8       51, 9    57, 0     62, -_     78, (=+)   85, BackSpc   72, Home       71, led 13
-//  73, led 03   2, Tab    8, Q       14, W       20. E    25, R    30, T       36, Y    41, U    46, I       52, O    58, P     63, [{     89, ]}     93, \|        75, PgUp       74, led 14
-//  76, led 04   3, Caps   9, A       15, S       21, D    26, F    31, G       37, H    42, J    47, K       53, L    59, ;:    64, '"                96, Enter     86, PgDn       77, led 15
-//  80, led 05   4, Sh_L   10, Z      16, X       22, C    27, V    32, B       38, N    43, M    48, ,<      54, .<   60, /?               90, Sh_R   94, Up        82, End        81, led 16
-//  83, led 06   5, Ct_L   11,Win_L   17, Alt_L                     33, SPACE                     49, Alt_R   55, FN             65, Ct_R   95, Left   97, Down      79, Right      84, led 17
-//  87, led 07                                                                                                                                                                      88, led 18
-//  91, led 08  
 
 static void set_rgb_caps_leds_on() { 
-        set_rgb_led_red(3);
-        set_rgb_led_red(80);
-        set_rgb_led_red(83);
+    for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
+        set_rgb_led_on(CAPS_LOCK_LEDS[i]);
+    }
 }
 
 static void set_rgb_caps_leds_off() {
-        set_rgb_led_none(3);
-        set_rgb_led_none(80);
-        set_rgb_led_none(83);
+    for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
+        set_rgb_led_none(CAPS_LOCK_LEDS[i]);
+    }
 }
 
-static void set_rgb_led_red(uint8_t keycode) {
-  rgb_matrix_set_color(keycode, 255, 0, 0);
+static void set_rgb_led_on(uint8_t keycode) {
+    rgb_matrix_set_color(keycode, 100, 100, 100);
 }
 static void set_rgb_led_none(uint8_t keycode) {
-  rgb_matrix_set_color(keycode, 0, 0, 0); 
+    rgb_matrix_set_color(keycode, 0, 0, 0); 
 }
 
 #endif
