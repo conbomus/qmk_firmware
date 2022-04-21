@@ -43,15 +43,13 @@ enum custom_keycodes {
 #define CAPS_LOCK_LED_COUNT 8
 uint8_t CAPS_LOCK_LEDS[CAPS_LOCK_LED_COUNT] = {67, 70, 73, 76, 80, 83, 87, 91};
 
-// #define STATUS_LED_COUNT 3
-// uint8_t ENCODER_STATUS_LEDS[STATUS_LED_COUNT] = {69, 72, 68};
 
 
 #ifdef ENCODER_ENABLE
 
 bool ENCODER_SCROLL_ON = false;
 bool ENCODER_INTENSITY_MODIFY_ON = false;
-uint8_t ENCODER_SCROLL_INTENSITY = 3; //Defaults value to 3.
+uint8_t ENCODER_SCROLL_INTENSITY = 1; //Defaults value to 1.
 
 #define SCROLL_INTENSITY_COUNT 8
 uint8_t SCROLL_STATUS_LEDS[SCROLL_INTENSITY_COUNT] = {92, 88, 84, 81, 77, 74, 71, 68};
@@ -92,7 +90,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [1] = LAYOUT(
-        _______, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
+        DEBUG,   KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
         _______, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
         _______, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, RESET,            USR_CUT,
         _______, _______, RGB_VAD, _______, _______, _______, _______, _______, _______, _______, _______, _______,          QMKBEST,          USR_PST,
@@ -197,17 +195,18 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         if (get_mods() & MOD_MASK_CTRL) {
             unregister_mods(MOD_MASK_CTRL);
             if (clockwise) {
-                tap_code(KC_DOWN);
-            } else {
-                tap_code(KC_UP);
+                tap_code(KC_RGHT);
+            }
+            else {
+                tap_code(KC_LEFT);
             }
             set_mods(mod_state);
         }
         else if (clockwise) {
-            tap_code(KC_RGHT);
+            tap_code(KC_DOWN);
         }
         else {
-            tap_code(KC_LEFT);
+            tap_code(KC_UP);
         }
     }
 
@@ -228,8 +227,8 @@ static void scroll_with_intensity(uint8_t keycode) {
 static void set_rgb_caps_leds_on(void);
 static void set_rgb_caps_leds_off(void);
 
-static void set_rgb_led_on(uint8_t keycode);
-static void set_rgb_led_none(uint8_t keycode);
+static void set_status_led_on(uint8_t keycode);
+static void set_status_led_off(uint8_t keycode);
 
 
 void rgb_matrix_indicators_user(void) {
@@ -242,17 +241,17 @@ void rgb_matrix_indicators_user(void) {
 
     if (ENCODER_INTENSITY_MODIFY_ON) {
         for (int i = 0; i < ENCODER_SCROLL_INTENSITY && i < SCROLL_INTENSITY_COUNT; i++) {
-            set_rgb_led_on(SCROLL_STATUS_LEDS[i]);
+            set_status_led_on(SCROLL_STATUS_LEDS[i]);
         }
     }
     else if (ENCODER_SCROLL_ON) {
         for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
-            set_rgb_led_on(SCROLL_STATUS_LEDS[i]);
+            set_status_led_on(SCROLL_STATUS_LEDS[i]);
         }
     }
     else {
         for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
-            set_rgb_led_none(SCROLL_STATUS_LEDS[i]);
+            set_status_led_off(SCROLL_STATUS_LEDS[i]);
         }
     }
 }
@@ -261,20 +260,26 @@ void rgb_matrix_indicators_user(void) {
 
 static void set_rgb_caps_leds_on() { 
     for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
-        set_rgb_led_on(CAPS_LOCK_LEDS[i]);
+        set_status_led_on(CAPS_LOCK_LEDS[i]);
     }
 }
 
 static void set_rgb_caps_leds_off() {
     for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
-        set_rgb_led_none(CAPS_LOCK_LEDS[i]);
+        set_status_led_off(CAPS_LOCK_LEDS[i]);
     }
 }
 
-static void set_rgb_led_on(uint8_t keycode) {
-    rgb_matrix_set_color(keycode, 100, 100, 100);
+static void set_status_led_on(uint8_t keycode) {
+    uint8_t brightness = rgb_matrix_get_val();
+    
+    // If the brightness is all the way down, turn it up to a nice subtle value.
+    if (brightness < 1) {
+        brightness = 100;
+    }
+    rgb_matrix_set_color(keycode, brightness, brightness, brightness);
 }
-static void set_rgb_led_none(uint8_t keycode) {
+static void set_status_led_off(uint8_t keycode) {
     rgb_matrix_set_color(keycode, 0, 0, 0); 
 }
 
