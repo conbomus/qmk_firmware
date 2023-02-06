@@ -90,7 +90,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [1] = LAYOUT(
-        DEBUG,   KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
+QK_DEBUG_TOGGLE, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
         _______, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
         _______, _______, RGB_MOD, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, RESET,            USR_CUT,
         _______, RGB_SPD, RGB_RMOD,RGB_SPI, RGB_VAD, _______, _______, _______, _______, _______, _______, _______,          QMKBEST,          USR_PST,
@@ -231,7 +231,8 @@ static void set_status_led_on(uint8_t keycode);
 static void set_status_led_off(uint8_t keycode);
 
 
-void rgb_matrix_indicators_user(void) {
+bool rgb_matrix_indicators_user(void) {
+    
     if (host_keyboard_led_state().caps_lock) {
         set_rgb_caps_leds_on();
     }
@@ -254,6 +255,8 @@ void rgb_matrix_indicators_user(void) {
             set_status_led_off(SCROLL_STATUS_LEDS[i]);
         }
     }
+
+    return true;
 }
 
 
