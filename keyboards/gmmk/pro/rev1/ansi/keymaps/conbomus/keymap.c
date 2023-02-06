@@ -90,9 +90,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [1] = LAYOUT(
-QK_DEBUG_TOGGLE, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
+        DB_TOGG, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
         _______, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
-        _______, _______, RGB_MOD, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, RESET,            USR_CUT,
+        _______, _______, RGB_MOD, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, QK_BOOT,          USR_CUT,
         _______, RGB_SPD, RGB_RMOD,RGB_SPI, RGB_VAD, _______, _______, _______, _______, _______, _______, _______,          QMKBEST,          USR_PST,
         _______,          _______, RGB_HUI, _______, _______, _______, NK_TOGG, _______, _______, _______, _______,          _______, KC_PGUP, _______,
         _______, _______, _______,                            _______,                            _______, _______, _______, KC_HOME, KC_PGDN, KC_END
