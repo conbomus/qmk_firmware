@@ -37,21 +37,14 @@ enum custom_keycodes {
 //  87, led 07                                                                                                                                                                      88, led 17
 //  91, led 08                                                                                                                                                                      92, led 18
 
-#define CAPS_LOCK_LED_COUNT 8
-uint8_t CAPS_LOCK_LEDS[CAPS_LOCK_LED_COUNT] = {67, 70, 73, 76, 80, 83, 87, 91};
+#define CAPS_LOCK_LED 67
 
 
 
 #ifdef ENCODER_ENABLE
 
+#define SCROLL_STATUS_LED 68
 bool ENCODER_SCROLL_ON = false;
-bool ENCODER_INTENSITY_MODIFY_ON = false;
-uint8_t ENCODER_SCROLL_INTENSITY = 1; //Defaults value to 1.
-
-#define SCROLL_INTENSITY_COUNT 8
-uint8_t SCROLL_STATUS_LEDS[SCROLL_INTENSITY_COUNT] = {92, 88, 84, 81, 77, 74, 71, 68};
-
-static void scroll_with_intensity(uint8_t keycode);
 
 #endif //ENCODER_ENABLE
 
@@ -87,10 +80,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [1] = LAYOUT(
-        DB_TOGG, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          USR_SINT,
+        DB_TOGG, KC_MYCM, KC_WHOM, KC_CALC, KC_MSEL, KC_MPRV, KC_MNXT, KC_MPLY, KC_MSTP, KC_MUTE, KC_VOLD, KC_VOLU, _______, _______,          _______,
         _______, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_DEL,           _______,
-        _______, _______, RGB_MOD, _______, RGB_VAI, _______, _______, _______, _______, _______, _______, _______, _______, QK_BOOT,          _______,
-        _______, RGB_SPD, RGB_RMOD,RGB_SPI, RGB_VAD, _______, _______, _______, _______, _______, _______, _______,          QMKBEST,          _______,
+        _______, _______, RGB_MOD, _______, RGB_VAI, RGB_SAI, _______, _______, _______, _______, _______, _______, _______, QK_BOOT,          _______,
+        _______, RGB_SPD, RGB_RMOD,RGB_SPI, RGB_VAD, RGB_SAD, _______, _______, _______, _______, _______, _______,          QMKBEST,          _______,
         _______,          _______, RGB_HUI, _______, _______, _______, NK_TOGG, _______, _______, _______, _______,          _______, KC_PGUP, _______,
         _______, _______, _______,                            _______,                            _______, _______, _______, KC_HOME, KC_PGDN, KC_END
     ),
@@ -108,15 +101,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         break;
 
         #ifdef ENCODER_ENABLE
+        
         case USR_SLCK:
             if (record->event.pressed){
                 ENCODER_SCROLL_ON = !ENCODER_SCROLL_ON;
-            }
-        break;
-        
-        case USR_SINT:
-            if (record->event.pressed) {
-                ENCODER_INTENSITY_MODIFY_ON = !ENCODER_INTENSITY_MODIFY_ON;
             }
         break;
 
@@ -133,40 +121,13 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     uint8_t mod_state = get_mods();
 
 
-    if (ENCODER_INTENSITY_MODIFY_ON) {
-        if (clockwise) {
-            if (ENCODER_SCROLL_INTENSITY <= 2) {
-                ENCODER_SCROLL_INTENSITY = 1;
-            }
-            else {
-                ENCODER_SCROLL_INTENSITY = ENCODER_SCROLL_INTENSITY - 1;
-            }
-        }
-        else {
-            if (ENCODER_SCROLL_INTENSITY >= (SCROLL_INTENSITY_COUNT - 1)) {
-                ENCODER_SCROLL_INTENSITY = SCROLL_INTENSITY_COUNT;
-            }
-            else {
-                ENCODER_SCROLL_INTENSITY = ENCODER_SCROLL_INTENSITY + 1;
-            }
-        }
-    }
     // If we are doing encoder scrolling, then we'll do all the mouse wheel codes.
-    else if (ENCODER_SCROLL_ON) {
-        if (get_mods() & MOD_MASK_CTRL) {
-            unregister_mods(MOD_MASK_CTRL);
-            if (clockwise) {
-                scroll_with_intensity(KC_MS_WH_RIGHT);
-            } else {
-                scroll_with_intensity(KC_MS_WH_LEFT);
-            }
-            set_mods(mod_state);
-        }
-        else if (clockwise) {
-            scroll_with_intensity(KC_MS_WH_DOWN);
+    if (ENCODER_SCROLL_ON) {
+        if (clockwise) {
+            tap_code(KC_MS_WH_DOWN);
         }
         else {
-            scroll_with_intensity(KC_MS_WH_UP);
+            tap_code(KC_MS_WH_UP);
         }
     }
     // If we are not encoder scrolling, then use the arrow key codes.
@@ -192,77 +153,27 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     return false;
 }
 
-static void scroll_with_intensity(uint8_t keycode) {
-    for (int i = 0; i < ENCODER_SCROLL_INTENSITY; i++) {
-        tap_code(keycode);
-    }
-};
-
 #endif // ENCODER_ENABLE
 
 
 #ifdef RGB_MATRIX_ENABLE
 
-static void set_rgb_caps_leds_on(void);
-static void set_rgb_caps_leds_off(void);
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
-static void set_status_led_on(uint8_t keycode);
-static void set_status_led_off(uint8_t keycode);
-
-
-bool rgb_matrix_indicators_user(void) {
-    
     if (host_keyboard_led_state().caps_lock) {
-        set_rgb_caps_leds_on();
+        RGB_MATRIX_INDICATOR_SET_COLOR(CAPS_LOCK_LED, 255, 255, 255); // assuming caps lock is at led #5
+    } else {
+        RGB_MATRIX_INDICATOR_SET_COLOR(CAPS_LOCK_LED, 0, 0, 0);
+    }
+
+    if (ENCODER_SCROLL_ON) {
+        RGB_MATRIX_INDICATOR_SET_COLOR(SCROLL_STATUS_LED, 255, 255, 255);
     }
     else {
-        set_rgb_caps_leds_off();
+        RGB_MATRIX_INDICATOR_SET_COLOR(SCROLL_STATUS_LED, 0, 0, 0);
     }
 
-    if (ENCODER_INTENSITY_MODIFY_ON) {
-        for (int i = 0; i < ENCODER_SCROLL_INTENSITY && i < SCROLL_INTENSITY_COUNT; i++) {
-            set_status_led_on(SCROLL_STATUS_LEDS[i]);
-        }
-    }
-    else if (ENCODER_SCROLL_ON) {
-        for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
-            set_status_led_on(SCROLL_STATUS_LEDS[i]);
-        }
-    }
-    else {
-        for (int i = 0; i < SCROLL_INTENSITY_COUNT; i++) {
-            set_status_led_off(SCROLL_STATUS_LEDS[i]);
-        }
-    }
-
-    return true;
-}
-
-
-
-static void set_rgb_caps_leds_on() { 
-    for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
-        set_status_led_on(CAPS_LOCK_LEDS[i]);
-    }
-}
-
-static void set_rgb_caps_leds_off() {
-    for (int i = 0; i < CAPS_LOCK_LED_COUNT; i++) {
-        set_status_led_off(CAPS_LOCK_LEDS[i]);
-    }
-}
-
-static void set_status_led_on(uint8_t keycode) {
-    uint8_t brightness = rgb_matrix_get_val();
-    
-    // If the brightness is all the way down, turn it up to a nice subtle value.
-    if (brightness < 1) {
-        brightness = 100;
-    }
-    rgb_matrix_set_color(keycode, brightness, brightness, brightness);
-}
-static void set_status_led_off(uint8_t keycode) {
-    rgb_matrix_set_color(keycode, 0, 0, 0); 
+    return false;
 }
 
 #endif
