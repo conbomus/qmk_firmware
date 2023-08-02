@@ -1,2 +1,2 @@
-DEBOUNCE = 10
-DEBOUNCE_TYPE = sym_defer_pk
+DEBOUNCE = 12
+DEBOUNCE_TYPE = sym_defer_g
